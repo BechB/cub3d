@@ -1,11 +1,8 @@
 NAME    =   cub3d
 SRCS    =   main.c \
             exec/window.c \
-			exec/init.c \
 			exec/utils.c \
 			exec/read_map.c \
-			exec/handle_img.c \
-			exec/mini_map.c \
 			parsing/parsing.c \
 			mini_libft/ft_isalnum.c \
 			mini_libft/ft_isalpha.c \

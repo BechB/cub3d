@@ -5,10 +5,19 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: bbousaad <bbousaad@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/10/28 18:12:38 by bbousaad          #+#    #+#             */
-/*   Updated: 2024/12/18 13:24:01 by bbousaad         ###   ########.fr       */
+/*   Created: 2024/12/23 10:58:55 by bbousaad          #+#    #+#             */
+/*   Updated: 2024/12/23 11:05:14 by bbousaad         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "cub3d.h"
 
+void    put_minimap(t_data *dta)
+{
+    int i;
+    int j;
+
+    i = 0;
+    j = 0;
+    while(dta->map[])
+}

@@ -6,36 +6,22 @@
 /*   By: bbousaad <bbousaad@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/02 16:49:24 by bbousaad          #+#    #+#             */
-/*   Updated: 2024/12/18 14:23:47 by bbousaad         ###   ########.fr       */
+/*   Updated: 2024/12/24 13:35:32 by bbousaad         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "cub3d.h"
 
-void    open_win(t_data *dta)
+void    open_win(t_data *data)
 {
-	(void) dta;
-	start();
-	// int i = 0;
-	// int j = 0;
-	// dta->north.path = "north.xpm";
-	// dta->east.path = "east.xpm";
-	// dta->south.path = "south.xpm";
-	// dta->west.path = "west.xpm";
-	// dta->floor.path = "floor.xpm";
-	// dta->size = 64;
-	// dta->mlx = mlx_init();
-	// dta->win = mlx_new_window(dta->mlx, 1500, 900, "cub3d");
-	// //check_img(dta);
-	// init_data(dta);
-	// handle_img(dta);
-	// put_mini(dta, i, j);
-	// init_spawn(dta);
-	// map_size(dta);
-	// mlx_hook(dta->win, 2, (1L << 0), key_press, dta);
-	// mlx_hook(dta->win, 17, (1L << 17), leave, dta);
-	// mlx_loop(dta->mlx);
-	
+    data->mlx = mlx_init();
+    data->win = mlx_new_window(data->mlx, WIN_WIDTH, WIN_HEIGHT, "CUB3D");
+    map_size(data);
+    init_player(data);
+    init_img(data);
+    mlx_hook(data->win, 2, 1L << 0, key_press, data);
+    render(data);
+    mlx_loop(data->mlx);
 }
 
 int	leave(int key, t_data *dta)
@@ -45,82 +31,202 @@ int	leave(int key, t_data *dta)
 	return (0);
 }
 
-// Exemple de carte (1 = mur, 0 = vide)
-int world_map[MAP_HEIGHT][MAP_WIDTH] = {
-    {1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-    {1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-    {1, 0, 0, 1, 0, 0, 0, 1, 0, 1},
-    {1, 0, 0, 1, 0, 0, 0, 1, 0, 1},
-    {1, 0, 0, 1, 0, 0, 0, 1, 0, 1},
-    {1, 0, 0, 0, 0, 1, 0, 0, 0, 1},
-    {1, 0, 1, 1, 1, 1, 1, 1, 0, 1},
-    {1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-    {1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-};
-
-void draw_line(void *mlx, void *win, int x, int start, int end, int color)
-{
+void draw_line(void *mlx, void *win, int x, int start, int end, int color) {
+    if (start < 0) start = 0;
+    if (end >= WIN_HEIGHT) end = WIN_HEIGHT - 1;
     for (int y = start; y <= end; y++) {
         mlx_pixel_put(mlx, win, x, y, color);
     }
 }
 
+int can_move(double new_x, double new_y, t_data *data) {
+    int map_x = (int)new_x;
+    int map_y = (int)new_y;
+    if (map_x >= 0 && map_x < data->map_width && map_y >= 0 && map_y < data->map_height) {
+        return data->map[map_y][map_x] == '0';
+    }
+    return 0;
+}
+
 void render(t_data *data)
 {
+    mlx_clear_window(data->mlx, data->win);
     for (int x = 0; x < WIN_WIDTH; x++)
-	{
-        double ray_angle = data->player_angle - (FOV / 2) * (PI / 180) + (x * (FOV / WIN_WIDTH) * (PI / 180));
+    {
+        double ray_angle = data->player_angle - (FOV / 2) * (PI / 180)
+                           + (x * (FOV / WIN_WIDTH) * (PI / 180));
         double ray_x = cos(ray_angle);
         double ray_y = sin(ray_angle);
         double dist = 0;
         int hit = 0;
+        int side = 0;
+
         while (!hit && dist < 20)
-		{
+        {
             dist += 0.1;
             int map_x = (int)(data->player_x + ray_x * dist);
             int map_y = (int)(data->player_y + ray_y * dist);
-            if (map_x >= 0 && map_x < MAP_WIDTH && map_y >= 0 && map_y < MAP_HEIGHT) {
-                if (world_map[map_y][map_x] == 1) hit = 1;
+
+            if (map_x >= 0 && map_x < data->map_width && map_y >= 0 && map_y < data->map_height)
+            {
+                if (data->map[map_y][map_x] == '1')
+                {
+                    hit = 1;
+                    if (fabs(ray_x) > fabs(ray_y))
+                        side = (ray_x > 0) ? 2 : 3;
+                    else
+                        side = (ray_y > 0) ? 0 : 1;
+                }
             }
+            else
+                hit = 1;
         }
+
+        if (!hit)
+            break;
         int line_height = (int)(WIN_HEIGHT / (dist * cos(ray_angle - data->player_angle)));
         int start = WIN_HEIGHT / 2 - line_height / 2;
         int end = WIN_HEIGHT / 2 + line_height / 2;
-        draw_line(data->mlx, data->win, x, start, end, RED2);
+
+        if (start < 0) start = 0;
+        if (end >= WIN_HEIGHT) end = WIN_HEIGHT - 1;
+
+        double wall_x;
+        if (side == 0 || side == 1)
+            wall_x = data->player_x + ray_x * dist;
+        else
+            wall_x = data->player_y + ray_y * dist;
+        wall_x -= floor(wall_x);
+
+        t_img *img = &data->img[side];
+        int img_x = (int)(wall_x * (double)img->width);
+        if ((side == 0 || side == 1) && ray_y > 0) img_x = img->width - img_x - 1;
+        if ((side == 2 || side == 3) && ray_x < 0) img_x = img->width - img_x - 1;
+
+        for (int y = start; y < end; y++)
+        {
+            int img_y = (int)((y - start) * ((double)img->height / line_height));
+            int color = *(int *)(img->addr + (img_y * img->line_len + img_x * (img->bpp / 8)));
+            if (color != 0)
+                mlx_pixel_put(data->mlx, data->win, x, y, color);
+        }
     }
 }
 
 int key_press(int keycode, t_data *data)
 {
+    if (keycode == ESC)
+    {
+        printf(RED"Rage quit!?\n"RESET);
+        exit(0);
+    }
     if (keycode == LEFT)
         data->player_angle -= 0.1;
     if (keycode == RIGHT)
         data->player_angle += 0.1;
     if (keycode == UP)
-	{
-        data->player_x += cos(data->player_angle);
-        data->player_y += sin(data->player_angle);
+    {
+        double new_x = data->player_x + cos(data->player_angle) * 0.5;
+        double new_y = data->player_y + sin(data->player_angle) * 0.5;
+        if (can_move(new_x, new_y, data))
+        {
+            data->player_x = new_x;
+            data->player_y = new_y;
+        }
     }
     if (keycode == DOWN)
-	{
-        data->player_x -= cos(data->player_angle);
-        data->player_y -= sin(data->player_angle);
+    {
+        double new_x = data->player_x - cos(data->player_angle) * 0.5;
+        double new_y = data->player_y - sin(data->player_angle) * 0.5;
+        if (can_move(new_x, new_y, data))
+        {
+            data->player_x = new_x;
+            data->player_y = new_y;
+        }
     }
-    mlx_clear_window(data->mlx, data->win);
     render(data);
     return (0);
 }
 
-int start(void)
+void init_player(t_data *data)
 {
-    t_data data;
-    data.mlx = mlx_init();
-    data.win = mlx_new_window(data.mlx, WIN_WIDTH, WIN_HEIGHT, "CUB3D");
-    data.player_x = 5.0;
-    data.player_y = 5.0;
-    data.player_angle = PI / 4;
-    render(&data);
-    mlx_key_hook(data.win, key_press, &data);
-    mlx_loop(data.mlx);
-    return (0);
+    int y;
+    int x;
+
+    y = 0;
+    x = 0;
+    while (y < data->map_height)
+    {
+        x = 0;
+        while(x < data->map_width)
+        {
+            if (data->map[y][x] == '0')
+            {
+                data->player_x = x + 0.5;
+                data->player_y = y + 0.5;
+                data->player_angle = PI / 4;
+                return;
+            }
+            x++;
+        }
+        y++;
+    }
+}
+
+void map_size(t_data *data)
+{
+    data->map_height = 0;
+    data->map_width = 0;
+
+    while (data->map[data->map_height])
+    {
+        int current_width = ft_strlen(data->map[data->map_height]);
+        if (current_width > data->map_width)
+            data->map_width = current_width;
+        data->map_height++;
+    }
+}
+
+void read_map(t_data *data, char *filename)
+{
+    int fd = open(filename, O_RDONLY);
+    if (fd == -1)
+    {
+        perror("Check file");
+        exit(1);
+    }
+    char buf[1000000];
+    int len = read(fd, buf, 999999);
+    if (len == -1) {
+        perror("Check file");
+        close(fd);
+        exit(1);
+    }
+    buf[len] = '\0';
+    close(fd);
+    data->map = ft_split(buf, '\n');
+    if (!data->map)
+    {
+        printf(stderr, "Check map\n");
+        exit(1);
+    }
+}
+
+void load_img(t_data *data, t_img *img, char *path)
+{
+    img->img = mlx_xpm_file_to_image(data->mlx, path, &img->width, &img->height);
+    if (!img->img)
+    {
+        printf(RED"Error : Check images%s\n"RESET, path);
+        exit(1);
+    }
+    img->addr = mlx_get_data_addr(img->img, &img->bpp, &img->line_len, &img->endian);
+}
+
+void init_img(t_data *data)
+{
+    load_img(data, &data->img[0], "north.xpm"); 
+    load_img(data, &data->img[1], "south.xpm");
+    load_img(data, &data->img[2], "east.xpm");
+    load_img(data, &data->img[3], "west.xpm");
 }

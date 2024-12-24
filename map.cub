@@ -1,11 +1,11 @@
 R 642982 516464
 
-NO ./textures/brick.xpm
-SO ./textures/blue.xpm
-WE ./textures/wood.xpm
-EA ./textures/grey.xpm
+NO ./imgs/brick.xpm
+SO ./imgs/blue.xpm
+WE ./imgs/wood.xpm
+EA ./imgs/grey.xpm
 
-S ./textures/barrel.xpm
+S ./imgs/barrel.xpm
 F 100,0,100
 C 0,0,0
 

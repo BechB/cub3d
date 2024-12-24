@@ -6,7 +6,7 @@
 /*   By: bbousaad <bbousaad@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/28 18:12:42 by bbousaad          #+#    #+#             */
-/*   Updated: 2024/12/18 13:26:50 by bbousaad         ###   ########.fr       */
+/*   Updated: 2024/12/24 13:24:31 by bbousaad         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,19 +37,18 @@
 
 #define WIN_WIDTH 800
 #define WIN_HEIGHT 600
-#define MAP_WIDTH 10
-#define MAP_HEIGHT 10
-#define FOV 60.0
+#define MAP_WIDTH 1500
+#define MAP_HEIGHT 900
+#define FOV 75.0
 
 typedef struct s_img {
-	void	*img;
-	char	*addr;
-	char	*path;
-	int		bits_per_pixel;
-	int		line_length;
-	int		endian;
-	int		img_y;
-	int		img_x;
+    void    *img;
+    char    *addr;
+    int     width;
+    int     height;
+    int     bpp;
+    int     line_len;
+    int     endian;
 }				t_img;
 
 typedef struct s_data
@@ -70,39 +69,34 @@ typedef struct s_data
 	double	dir_x;
 	double	dir_y;
 	double	dir_a;
-	int		height;
-	int		width;
+	int		map_height;
+	int		map_width;
 	char	**map;
 	char	**mapa;
 	t_img	north;
     t_img   south;
-    t_img   east;
+    t_img  east;
     t_img   west;
 	t_img	floor;
-
     double player_x;
     double player_y;
     double player_angle;
+	t_img   img[4];
 }               t_data;
 
 void	ft_exit(t_data *dta, char *mess, int status);
 void    ft_error(char *error_msg);
-void    open_win(t_data *dta);
-// int		put_img(t_data *dta);
-// void    check_img(t_data *dta);
-// int		leave(int key, t_data *dta);
+void    open_win(t_data *data);
 void	readmap(t_data	*dta, char	**argv);
-// void	handle_img(t_data *dta);
-// void	put_mini(t_data *dta, int i, int j);
-// void	draw_big_pixel(void *mlx_ptr, void *win_ptr, int x, int y, int size, int color);
-void    init_spawn(t_data *dta);
 void	map_size(t_data *dta);
-// int		key_press(int keycode, t_data *dta);
-void	ft_rotate(t_data *dta, double c);
 void    init_data(t_data *dta);
-// void 	draw_line(void *mlx_ptr, void *win_ptr, int x1, int y1, int x2, int y2, int color);
 void 	draw_line(void *mlx, void *win, int x, int start, int end, int color);
 void 	render(t_data *data);
 int 	key_press(int keycode, t_data *data);
-int 	start(void);
+void 	map_size(t_data *data);
+void    pos_player(t_data *dta);
+void 	init_player(t_data *data);
+void 	read_map(t_data *data, char *filename);
+void 	init_img(t_data *data);
+void 	load_img(t_data *data, t_img *img, char *path);
 #endif
